@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Serenova – Your Emotional Support Companion</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --sage:    #7a9e87;
+      --sage-lt: #b2cebb;
+      --sand:    #f5f0e8;
+      --sand-dk: #e8e0d0;
+      --clay:    #c4856a;
+      --ink:     #2e2e2e;
+      --mist:    #f9f7f4;
+      --white:   #ffffff;
+      --shadow:  rgba(46,46,46,.08);
+      --radius:  18px;
+      --bubble-user: #d4e8da;
+      --bubble-bot:  #ffffff;
+    }
+    html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--mist); color: var(--ink); overflow: hidden; }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 55% at 15% 20%, rgba(122,158,135,.18) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 60% at 85% 80%, rgba(196,133,106,.12) 0%, transparent 70%),
+        radial-gradient(ellipse 80% 80% at 50% 50%, rgba(245,240,232,.9) 0%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* ── LOGIN SCREEN ── */
+    #login-screen {
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(249,247,244,.97);
+      backdrop-filter: blur(20px);
+    }
+    .login-card {
+      background: white;
+      border-radius: 24px;
+      padding: 40px 36px;
+      width: 340px;
+      box-shadow: 0 8px 40px rgba(46,46,46,.12);
+      text-align: center;
+    }
+    .login-card .logo { font-size: 48px; margin-bottom: 16px; }
+    .login-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.6rem; font-weight: 400; color: var(--ink); margin-bottom: 6px; }
+    .login-card p { font-size: .88rem; color: #888; margin-bottom: 28px; line-height: 1.5; }
+    .login-card input {
+      width: 100%; padding: 12px 16px;
+      border: 1.5px solid var(--sand-dk);
+      border-radius: 12px; font-family: 'DM Sans', sans-serif;
+      font-size: .92rem; outline: none; margin-bottom: 14px;
+      transition: border-color .2s;
+    }
+    .login-card input:focus { border-color: var(--sage); }
+    .login-card button {
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, var(--sage), #5d8a6e);
+      color: white; border: none; border-radius: 12px;
+      font-family: 'DM Sans', sans-serif; font-size: .95rem;
+      font-weight: 500; cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 4px 14px rgba(122,158,135,.4);
+    }
+    .login-card button:hover { transform: scale(1.02); }
+    .login-note { font-size: .72rem; color: #bbb; margin-top: 14px; }
+
+    /* ── RETURNING USER BANNER ── */
+    #returning-banner {
+      display: none;
+      background: linear-gradient(135deg, #e8f5ee, #d4ead9);
+      border: 1px solid var(--sage-lt);
+      border-radius: 14px;
+      padding: 12px 18px;
+      margin: 0 24px 8px;
+      font-size: .82rem;
+      color: #2a4a33;
+      line-height: 1.5;
+    }
+
+    /* ── MOOD BADGE ── */
+    #mood-badge {
+      display: none;
+      position: absolute;
+      top: 14px; right: 50px;
+      background: var(--sage-lt);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: .72rem;
+      color: #2a4a33;
+    }
+
+    /* ── APP LAYOUT ── */
+    .app { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; max-width: 760px; margin: 0 auto; }
+    header { display: flex; align-items: center; gap: 14px; padding: 20px 28px 16px; border-bottom: 1px solid var(--sand-dk); background: rgba(249,247,244,.85); backdrop-filter: blur(12px); position: relative; }
+    .logo-mark { width: 44px; height: 44px; background: linear-gradient(135deg, var(--sage) 0%, var(--sage-lt) 100%); border-radius: 14px; display: grid; place-items: center; font-size: 22px; box-shadow: 0 4px 12px rgba(122,158,135,.3); flex-shrink: 0; }
+    .header-text h1 { font-family: 'DM Serif Display', serif; font-size: 1.35rem; font-weight: 400; }
+    .header-text p { font-size: .78rem; font-weight: 300; color: var(--sage); margin-top: 2px; letter-spacing: .04em; text-transform: uppercase; }
+    .status-dot { width: 8px; height: 8px; background: #6bc98c; border-radius: 50%; margin-left: auto; box-shadow: 0 0 0 3px rgba(107,201,140,.2); animation: pulse 2.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { box-shadow: 0 0 0 3px rgba(107,201,140,.2); } 50% { box-shadow: 0 0 0 6px rgba(107,201,140,.08); } }
+
+    #chat-window { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+    #chat-window::-webkit-scrollbar { width: 5px; }
+    #chat-window::-webkit-scrollbar-thumb { background: var(--sand-dk); border-radius: 10px; }
+
+    .message { display: flex; gap: 10px; animation: slideUp .35s cubic-bezier(.22,1,.36,1) both; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    .message.user { flex-direction: row-reverse; }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 16px; flex-shrink: 0; align-self: flex-end; }
+    .avatar.bot { background: linear-gradient(135deg, var(--sage) 0%, var(--sage-lt) 100%); box-shadow: 0 2px 8px rgba(122,158,135,.3); }
+    .avatar.user { background: linear-gradient(135deg, var(--clay) 0%, #d9a090 100%); box-shadow: 0 2px 8px rgba(196,133,106,.3); }
+    .bubble { max-width: 72%; padding: 13px 18px; border-radius: var(--radius); font-size: .93rem; line-height: 1.65; }
+    .message.bot .bubble { background: var(--bubble-bot); border-bottom-left-radius: 5px; box-shadow: 0 3px 14px var(--shadow); }
+    .message.user .bubble { background: var(--bubble-user); border-bottom-right-radius: 5px; color: #2a4a33; }
+    .bubble-time { font-size: .68rem; color: #aaa; margin-top: 5px; display: block; }
+    .message.user .bubble-time { text-align: right; }
+
+    .typing-indicator { display: none; align-items: center; gap: 10px; padding: 0 4px; }
+    .typing-indicator.visible { display: flex; }
+    .dots { background: var(--white); border-radius: var(--radius); border-bottom-left-radius: 5px; padding: 13px 18px; box-shadow: 0 3px 14px var(--shadow); display: flex; gap: 5px; align-items: center; }
+    .dot { width: 7px; height: 7px; background: var(--sage-lt); border-radius: 50%; animation: bounce .9s ease-in-out infinite; }
+    .dot:nth-child(2) { animation-delay: .15s; }
+    .dot:nth-child(3) { animation-delay: .3s; }
+    @keyframes bounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-7px); } }
+
+    .welcome-card { background: var(--white); border-radius: 20px; padding: 26px 26px 20px; box-shadow: 0 4px 20px var(--shadow); margin-bottom: 4px; }
+    .welcome-card h2 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 1.25rem; margin-bottom: 8px; }
+    .welcome-card p { font-size: .88rem; color: #666; line-height: 1.6; }
+    .wave { display: inline-block; animation: wave 1.8s ease-in-out 2; }
+    @keyframes wave { 0%,100% { transform: rotate(0deg); } 20% { transform: rotate(15deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(12deg); } }
+
+    .disclaimer { margin: 0 24px; padding: 10px 16px; background: rgba(245,240,232,.9); border: 1px solid var(--sand-dk); border-radius: 12px; font-size: .75rem; color: #888; text-align: center; line-height: 1.5; }
+
+    .input-area { padding: 16px 24px 22px; background: rgba(249,247,244,.9); backdrop-filter: blur(12px); border-top: 1px solid var(--sand-dk); }
+    .mood-row { display: flex; flex-wrap: wrap; gap: 7px; padding: 6px 0 14px; }
+    .mood-chip { border: 1.5px solid var(--sand-dk); background: var(--white); border-radius: 20px; padding: 5px 13px; font-size: .78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; color: #666; transition: background .15s, border-color .15s; }
+    .mood-chip:hover { background: var(--sage-lt); border-color: var(--sage); color: #2a4a33; }
+    .input-row { display: flex; align-items: flex-end; gap: 10px; background: var(--white); border-radius: 22px; padding: 8px 8px 8px 18px; box-shadow: 0 2px 16px var(--shadow), 0 0 0 1.5px var(--sand-dk); transition: box-shadow .2s; }
+    .input-row:focus-within { box-shadow: 0 4px 20px rgba(122,158,135,.2), 0 0 0 2px var(--sage); }
+    #user-input { flex: 1; border: none; outline: none; font-family: 'DM Sans', sans-serif; font-size: .92rem; background: transparent; resize: none; max-height: 120px; line-height: 1.5; color: var(--ink); padding: 4px 0; }
+    #user-input::placeholder { color: #bbb; }
+    #send-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background: linear-gradient(135deg, var(--sage) 0%, #5d8a6e 100%); color: white; cursor: pointer; display: grid; place-items: center; flex-shrink: 0; transition: transform .15s, box-shadow .15s, opacity .15s; box-shadow: 0 3px 10px rgba(122,158,135,.4); }
+    #send-btn:hover { transform: scale(1.07); }
+    #send-btn:active { transform: scale(.96); }
+    #send-btn:disabled { opacity: .45; cursor: default; transform: none; }
+    #send-btn svg { width: 18px; height: 18px; }
+
+    @media (max-width: 500px) {
+      header { padding: 14px 16px; }
+      #chat-window { padding: 16px 14px; }
+      .input-area { padding: 12px 14px 18px; }
+      .bubble { max-width: 86%; }
+      .login-card { width: 90%; padding: 30px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="logo">🌿</div>
+    <h2>Welcome to Serenova</h2>
+    <p>Enter your name to begin. Your conversations will be remembered next time you visit.</p>
+    <input type="text" id="name-input" placeholder="Your first name..." maxlength="30" />
+    <button onclick="startChat()">Begin 💚</button>
+    <p class="login-note">Your data is private and used only to personalise your experience.</p>
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div class="app">
+  <header>
+    <div class="logo-mark">🌿</div>
+    <div class="header-text">
+      <h1>Serenova</h1>
+      <p>Emotional Support Companion</p>
+    </div>
+    <div id="mood-badge"></div>
+    <div class="status-dot"></div>
+  </header>
+
+  <div id="returning-banner"></div>
+
+  <div id="chat-window">
+    <div class="welcome-card">
+      <h2><span class="wave">👋</span> Hi, I'm Serenova</h2>
+      <p>I'm here to listen without judgment and support you through whatever you're feeling. You don't have to be okay — this is a safe space.</p>
+    </div>
+    <div class="message bot">
+      <div class="avatar bot">🌿</div>
+      <div>
+        <div class="bubble">
+          How are you feeling today? You can share as much or as little as you'd like — I'm here for you. 💚
+          <span class="bubble-time" id="greeting-time"></span>
+        </div>
+      </div>
+    </div>
+    <div class="typing-indicator" id="typing">
+      <div class="avatar bot">🌿</div>
+      <div class="dots">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ Serenova is not a substitute for professional mental health care. If you are in crisis, please contact a licensed professional or helpline.
+  </div>
+
+  <div class="input-area">
+    <div class="mood-row" id="mood-chips">
+      <button class="mood-chip" onclick="injectMood(this)">😔 Sad</button>
+      <button class="mood-chip" onclick="injectMood(this)">😰 Anxious</button>
+      <button class="mood-chip" onclick="injectMood(this)">😤 Frustrated</button>
+      <button class="mood-chip" onclick="injectMood(this)">😞 Lonely</button>
+      <button class="mood-chip" onclick="injectMood(this)">😶 Numb</button>
+      <button class="mood-chip" onclick="injectMood(this)">🙂 Okay</button>
+    </div>
+    <div class="input-row">
+      <textarea id="user-input" rows="1" placeholder="Share what's on your mind…" maxlength="1000"></textarea>
+      <button id="send-btn" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── CONFIG ─────────────────────────────────────────────────
+  const BACKEND_URL = "https://script.google.com/macros/s/AKfycbw1lQUs6AxQIfNytb-VGtebynqpmiQN-v5u_TmdPVVjNMnUv5LKVQlmFs9ngWnrzvSF/exec";
+  // ───────────────────────────────────────────────────────────
+
+  const chatWindow = document.getElementById("chat-window");
+  const userInput  = document.getElementById("user-input");
+  const sendBtn    = document.getElementById("send-btn");
+  const typing     = document.getElementById("typing");
+  const moodChips  = document.getElementById("mood-chips");
+  const moodBadge  = document.getElementById("mood-badge");
+
+  let history  = [];
+  let userId   = "";
+  let userName = "";
+
+  document.getElementById("greeting-time").textContent = now();
+
+  // ── GENERATE OR LOAD USER ID ────────────────────────────────
+  // localStorage saves the user ID in the browser permanently
+  // So the same user gets the same ID every visit
+  function getOrCreateUserId() {
+    let id = localStorage.getItem("serenova_user_id");
+    if (!id) {
+      // Create a unique ID: timestamp + random number
+      id = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem("serenova_user_id", id);
+    }
+    return id;
+  }
+
+  // ── START CHAT (called after login) ─────────────────────────
+  async function startChat() {
+    const nameInput = document.getElementById("name-input").value.trim();
+    if (!nameInput) {
+      document.getElementById("name-input").style.borderColor = "#e74c3c";
+      return;
+    }
+
+    userName = nameInput;
+    userId   = getOrCreateUserId();
+
+    // Save name in browser for next visit
+    localStorage.setItem("serenova_user_name", userName);
+
+    // Hide login screen
+    document.getElementById("login-screen").style.display = "none";
+
+    // Check if returning user
+    const savedName = localStorage.getItem("serenova_user_name");
+    const visitCount = parseInt(localStorage.getItem("serenova_visit_count") || "0") + 1;
+    localStorage.setItem("serenova_visit_count", visitCount);
+
+    if (visitCount > 1) {
+      // Show returning user banner
+      showReturningBanner(userName, visitCount);
+    }
+
+    // Update header greeting
+    document.querySelector(".header-text p").textContent = "Hi, " + userName + " 💚";
+  }
+
+  // ── SHOW RETURNING USER BANNER ──────────────────────────────
+  function showReturningBanner(name, visitCount) {
+    const banner = document.getElementById("returning-banner");
+    banner.style.display = "block";
+    banner.innerHTML = `🌿 Welcome back, <strong>${name}</strong>! This is your visit #${visitCount}. I remember you — your past conversations help me support you better.`;
+
+    // Also update the greeting bubble
+    const greetingBubble = document.querySelector(".message.bot .bubble");
+    greetingBubble.innerHTML = `Welcome back, ${name}! 💚 I'm so glad you're here again. How are you feeling today? <span class="bubble-time">${now()}</span>`;
+  }
+
+  // ── MOOD BADGE UPDATE ───────────────────────────────────────
+  function updateMoodBadge(mood) {
+    const moodEmojis = {
+      happy: "😊 Happy", sad: "😔 Sad", anxious: "😰 Anxious",
+      frustrated: "😤 Frustrated", lonely: "😞 Lonely",
+      numb: "😶 Numb", neutral: "😐 Neutral"
+    };
+    moodBadge.style.display = "block";
+    moodBadge.textContent = moodEmojis[mood] || mood;
+  }
+
+  // ── KEYBOARD SHORTCUTS ──────────────────────────────────────
+  document.getElementById("name-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") startChat();
+  });
+
+  userInput.addEventListener("input", () => {
+    userInput.style.height = "auto";
+    userInput.style.height = Math.min(userInput.scrollHeight, 120) + "px";
+  });
+
+  userInput.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  // ── HELPER FUNCTIONS ────────────────────────────────────────
+  function injectMood(btn) {
+    const text = btn.textContent.replace(/^[\p{Emoji}\s]+/u, "").trim();
+    userInput.value = `I'm feeling ${text.toLowerCase()} right now.`;
+    userInput.focus();
+    moodChips.style.display = "none";
+  }
+
+  function now() {
+    return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function appendMessage(role, text) {
+    const isUser = role === "user";
+    const div    = document.createElement("div");
+    div.className = `message ${role}`;
+    const avatar  = `<div class="avatar ${role}">${isUser ? "🙂" : "🌿"}</div>`;
+    const escaped = text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>");
+    const bubble  = `<div><div class="bubble">${escaped}<span class="bubble-time">${now()}</span></div></div>`;
+    div.innerHTML = isUser ? bubble + avatar : avatar + bubble;
+    chatWindow.insertBefore(div, typing);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  function setLoading(on) {
+    sendBtn.disabled   = on;
+    userInput.disabled = on;
+    typing.classList.toggle("visible", on);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  // ── SEND MESSAGE ────────────────────────────────────────────
+  async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text) return;
+
+    userInput.value = "";
+    userInput.style.height = "auto";
+    moodChips.style.display = "none";
+
+    appendMessage("user", text);
+    history.push({ role: "user", parts: [{ text }] });
+    setLoading(true);
+
+    try {
+      const res = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action:   "chat",
+          userId:   userId,
+          userName: userName,
+          history:  history
+        })
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      const reply = data.reply || "I'm sorry, I didn't get a response. Please try again.";
+      const mood  = data.mood  || "neutral";
+
+      history.push({ role: "model", parts: [{ text: reply }] });
+      appendMessage("bot", reply);
+      updateMoodBadge(mood);
+
+    } catch (err) {
+      appendMessage("bot", "I'm having a little trouble connecting right now. Please check your internet and try again. 💚");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+</script>
+</body>
+</html>
